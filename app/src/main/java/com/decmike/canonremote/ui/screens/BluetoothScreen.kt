@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothConnected
@@ -115,10 +116,13 @@ fun BluetoothScreen(onBack: () -> Unit) {
         try { block() } catch (e: Exception) { CameraRepository.message("$label : ${e.message}") }
     }
 
-    Column(Modifier.fillMaxSize().statusBarsPadding()) {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour") }
             Text("Télécommande Bluetooth", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+            IconButton(onClick = { HelpNav.open(HelpTopic.BLUETOOTH) }) {
+                Icon(Icons.AutoMirrored.Filled.HelpOutline, "Aide")
+            }
             if (state is BleState.Connected) {
                 TextButton(onClick = { BleRemote.disconnect() }) { Text("Déconnecter") }
             }

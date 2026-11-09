@@ -32,7 +32,9 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SelectAll
@@ -280,25 +282,36 @@ private fun Viewer(
     val pager = rememberPagerState(initialPage = start.coerceIn(0, files.lastIndex)) { files.size }
     var showInfo by remember { mutableStateOf(false) }
     var info by remember { mutableStateOf<JSONObject?>(null) }
+    val guides = com.decmike.canonremote.ui.rememberGuideState()
+    var showGuide by remember { mutableStateOf(false) }
     val file = files[pager.currentPage.coerceIn(0, files.lastIndex)]
     LaunchedEffect(file.url, showInfo) { info = if (showInfo) vm.info(file) else null }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         HorizontalPager(pager, Modifier.fillMaxSize(), key = { files[it].url }) { page ->
             val f = files[page]
+            var imgSize by remember(f.url) { mutableStateOf<androidx.compose.ui.geometry.Size?>(null) }
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 AsyncImage(
                     model = if (f.isVideo) f.thumbnailUrl else f.displayUrl,
                     contentDescription = f.name,
                     contentScale = ContentScale.Fit,
+                    onSuccess = { imgSize = it.painter.intrinsicSize },
                     modifier = Modifier.fillMaxSize(),
                 )
+                val sz = imgSize
+                if (showGuide && sz != null) com.decmike.canonremote.ui.GuideOverlay(guides, sz, Modifier.fillMaxSize())
             }
         }
         Row(Modifier.fillMaxWidth().background(Color.Black.copy(alpha = .5f)).padding(4.dp),
             verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour", tint = Color.White) }
             Text("${file.name}  ·  ${pager.currentPage + 1}/${files.size}", Modifier.weight(1f), color = Color.White)
+            IconButton(onClick = { showGuide = !showGuide }) {
+                Icon(Icons.Default.GridOn, "Mire de composition",
+                    tint = if (showGuide) MaterialTheme.colorScheme.primary else Color.White)
+            }
+            if (showGuide) IconButton(onClick = { guides.pickerOpen = true }) { Icon(Icons.Default.Tune, "Choisir la mire", tint = Color.White) }
             IconButton(onClick = { showInfo = !showInfo }) { Icon(Icons.Default.Info, "Infos", tint = Color.White) }
             IconButton(onClick = { vm.download(listOf(file)) }) { Icon(Icons.Default.Download, "Télécharger", tint = Color.White) }
             IconButton(onClick = { onDelete(file) }) { Icon(Icons.Default.Delete, "Supprimer", tint = Color.White) }
@@ -329,6 +342,7 @@ private fun Viewer(
                 }
             }
         }
+        com.decmike.canonremote.ui.GuidePicker(guides)
         if (file.isVideo) {
             Text("Aperçu vidéo : téléchargez le fichier pour le lire.", color = Color.White,
                 modifier = Modifier.align(Alignment.Center).clip(RoundedCornerShape(8.dp))

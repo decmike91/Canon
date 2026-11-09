@@ -26,9 +26,26 @@ class Prefs(context: Context) {
         get() = sp.getString("lv_size", "small") ?: "small"
         set(v) = sp.edit().putString("lv_size", v).apply()
 
-    var grid: Int  // 0 = aucune, 1 = tiers, 2 = carré 4x4, 3 = diagonales
-        get() = sp.getInt("grid", 1)
-        set(v) = sp.edit().putInt("grid", v).apply()
+    /** Mire de composition (nom de CompositionGuide). */
+    var guide: String
+        get() = sp.getString("guide", "THIRDS") ?: "THIRDS"
+        set(v) = sp.edit().putString("guide", v).apply()
+
+    var guideAspect: String
+        get() = sp.getString("guide_aspect", "AUTO") ?: "AUTO"
+        set(v) = sp.edit().putString("guide_aspect", v).apply()
+
+    var guideColor: Int
+        get() = sp.getInt("guide_color", 0)
+        set(v) = sp.edit().putInt("guide_color", v).apply()
+
+    var guideFlipH: Boolean
+        get() = sp.getBoolean("guide_flip_h", false)
+        set(v) = sp.edit().putBoolean("guide_flip_h", v).apply()
+
+    var guideFlipV: Boolean
+        get() = sp.getBoolean("guide_flip_v", false)
+        set(v) = sp.edit().putBoolean("guide_flip_v", v).apply()
 
     var histogram: Boolean
         get() = sp.getBoolean("histogram", true)

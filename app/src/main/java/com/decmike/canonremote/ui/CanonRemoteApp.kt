@@ -2,10 +2,12 @@ package com.decmike.canonremote.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Battery2Bar
@@ -52,6 +54,9 @@ import com.decmike.canonremote.ui.screens.BluetoothScreen
 import com.decmike.canonremote.ui.screens.ConnectScreen
 import com.decmike.canonremote.ui.screens.DeviceScreen
 import com.decmike.canonremote.ui.screens.GalleryScreen
+import com.decmike.canonremote.ui.screens.HelpNav
+import com.decmike.canonremote.ui.screens.HelpScreen
+import com.decmike.canonremote.ui.screens.HelpTopic
 import com.decmike.canonremote.ui.screens.RemoteScreen
 import com.decmike.canonremote.ui.screens.SequenceScreen
 import com.decmike.canonremote.ui.screens.SettingsScreen
@@ -67,22 +72,32 @@ private enum class Tab(val route: String, val label: String, val icon: ImageVect
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CanonRemoteApp() {
-    val state by CameraRepository.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(Unit) { CameraRepository.messages.collect { snackbar.showSnackbar(it) } }
-
+    val helpTopic by HelpNav.topic.collectAsStateWithLifecycle()
     var showBle by rememberSaveable { mutableStateOf(false) }
-    if (showBle) {
-        Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { pad ->
-            Box(Modifier.padding(bottom = pad.calculateBottomPadding())) { BluetoothScreen(onBack = { showBle = false }) }
+
+    // Les écrans Bluetooth et Aide se superposent : l'onglet en cours et la visée sont conservés.
+    Box(Modifier.fillMaxSize()) {
+        MainContent(snackbar, onBluetooth = { showBle = true })
+        if (showBle) {
+            Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { pad ->
+                Box(Modifier.padding(bottom = pad.calculateBottomPadding())) { BluetoothScreen(onBack = { showBle = false }) }
+            }
         }
-        return
+        helpTopic?.let { t -> HelpScreen(t, onBack = { HelpNav.close() }) }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MainContent(snackbar: SnackbarHostState, onBluetooth: () -> Unit) {
+    val state by CameraRepository.state.collectAsStateWithLifecycle()
 
     val connected = state as? ConnState.Connected
     if (connected == null) {
         Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { pad ->
-            ConnectScreen(state, onBluetooth = { showBle = true }, modifier = Modifier.padding(pad))
+            ConnectScreen(state, onBluetooth = onBluetooth, modifier = Modifier.padding(pad))
         }
         return
     }
@@ -118,7 +133,19 @@ fun CanonRemoteApp() {
                             Spacer(Modifier.width(4.dp))
                         }
                     }
-                    IconButton(onClick = { showBle = true }) {
+                    IconButton(onClick = {
+                        HelpNav.open(
+                            when (current) {
+                                Tab.Remote.route -> HelpTopic.REMOTE
+                                Tab.Settings.route -> HelpTopic.SETTINGS
+                                Tab.Gallery.route -> HelpTopic.GALLERY
+                                Tab.Sequences.route -> HelpTopic.SEQUENCES
+                                Tab.Device.route -> HelpTopic.DEVICE
+                                else -> HelpTopic.HOME
+                            },
+                        )
+                    }) { Icon(Icons.AutoMirrored.Filled.HelpOutline, "Aide") }
+                    IconButton(onClick = onBluetooth) {
                         Icon(Icons.Default.Bluetooth, "Télécommande Bluetooth")
                     }
                     IconButton(onClick = { CameraRepository.disconnect() }) {

@@ -96,6 +96,30 @@ object Labels {
 
     fun name(key: String) = names[key] ?: key.replaceFirstChar { it.uppercase() }
 
+    /** Rappel affiché lors de la modification d'un réglage. */
+    private val descriptions = mapOf(
+        "shootingmodedial" to "P : l'appareil choisit tout. Av : vous fixez l'ouverture (profondeur de champ). Tv : vous fixez la vitesse (mouvement). M : vous fixez tout. B : pose longue tant que le déclencheur est enfoncé.",
+        "tv" to "Temps d'ouverture de l'obturateur. Rapide (1/1000) = mouvement figé, moins de lumière. Lent (1/15, 1\") = flou de mouvement, plus de lumière : pensez au trépied. Doubler le temps = +1 IL.",
+        "av" to "Diamètre du diaphragme. Petit chiffre (f/1.8) = beaucoup de lumière, arrière-plan flou. Grand chiffre (f/11) = moins de lumière, tout est net. Au-delà de f/16, la diffraction réduit la netteté.",
+        "iso" to "Sensibilité du capteur. Bas (100-400) = image propre. Élevé (3200+) = image plus claire mais plus de bruit. Montez l'ISO seulement si la vitesse ou l'ouverture ne suffisent plus.",
+        "exposure" to "Éclaircit (+) ou assombrit (−) l'image en P, Av et Tv. Utile sur la neige (+1) ou les scènes sombres (−1). Surveillez l'histogramme.",
+        "wb" to "Neutralise la couleur de la lumière. AWB convient presque toujours ; Lumière du jour pour des couleurs constantes ; Tungstène pour l'intérieur ; Ombre/Nuageux pour réchauffer.",
+        "colortemperature" to "En kelvins : 2700-3200 K ampoules, 5200-5500 K soleil, 6500-7500 K ombre/nuageux. Plus la valeur est haute, plus l'image est réchauffée.",
+        "afoperation" to "One-Shot : la mise au point se verrouille (sujets immobiles). Servo : suivi continu (sujets en mouvement). AI Focus : bascule automatiquement.",
+        "afmethod" to "Zone utilisée pour la mise au point : visage + suivi, zone, collimateur unique (précis), spot…",
+        "drive" to "Vue par vue, rafale ou retardateur. Pour la télécommande Bluetooth, certains boîtiers demandent le mode retardateur/télécommande.",
+        "metering" to "Évaluative : toute l'image (par défaut). Sélective / spot : une petite zone, pour les contre-jours. Moyenne pondérée centrale : priorité au centre.",
+        "stillimagequality" to "RAW : fichier brut, idéal pour la retouche (plus lourd). JPEG : prêt à partager. RAW + JPEG combine les deux.",
+        "picturestyle" to "Rendu des JPEG (contraste, saturation, netteté). Sans effet sur les fichiers RAW, sauf à l'ouverture dans Canon DPP.",
+        "aeb" to "Bracketing automatique de l'appareil : plusieurs vues avec des expositions différentes. Pour un HDR piloté par l'application, utilisez Séquences › HDR.",
+        "stillimageaspectratio" to "Format des photos. Les mires de composition de la visée s'adaptent automatiquement à ce format.",
+        "silentshutter" to "Déclenchement électronique sans bruit. Attention aux déformations sur les sujets rapides et au scintillement des éclairages.",
+        "highlighttonepriority" to "Préserve les hautes lumières (ciels, robes blanches). ISO minimum relevé.",
+        "autolightingoptimizer" to "Éclaircit les ombres et corrige le contraste des JPEG.",
+    )
+
+    fun description(key: String): String? = descriptions[key]
+
     fun value(key: String, v: String): String = when (key) {
         "tv", "av", "exposure", "iso" -> Exposure.pretty(key, v)
         else -> values[v] ?: v.replace('_', ' ')
@@ -136,6 +160,7 @@ fun SettingDialog(
                 title = { Text(Labels.name(setting.key)) },
                 text = {
                     Column {
+                        SettingHint(setting.key)
                         val snapped = (((v - r.min) / r.step).roundToInt() * r.step + r.min).coerceIn(r.min, r.max)
                         Text("$snapped", style = MaterialTheme.typography.headlineMedium)
                         Slider(
@@ -161,6 +186,7 @@ fun SettingDialog(
                 title = { Text(Labels.name(setting.key)) },
                 text = {
                     LazyColumn(Modifier.heightIn(max = 420.dp)) {
+                        item { SettingHint(setting.key) }
                         sub.forEach { (field, opts) ->
                             item { SectionTitle(field) }
                             items(opts) { o ->
@@ -178,19 +204,28 @@ fun SettingDialog(
             val state = rememberLazyListState()
             LaunchedEffect(Unit) {
                 val i = opts.indexOf(setting.value)
-                if (i > 2) state.scrollToItem(i - 2)
+                if (i > 1) state.scrollToItem(i - 1)
             }
             AlertDialog(
                 onDismissRequest = onDismiss,
                 title = { Text(Labels.name(setting.key)) },
                 text = {
                     LazyColumn(Modifier.heightIn(max = 420.dp), state = state) {
+                        item { SettingHint(setting.key) }
                         items(opts) { o -> OptionRow(Labels.value(setting.key, o), o == setting.value) { onPick(o) } }
                     }
                 },
                 confirmButton = { TextButton(onClick = onDismiss) { Text("Fermer") } },
             )
         }
+    }
+}
+
+@Composable
+private fun SettingHint(key: String) {
+    Labels.description(key)?.let {
+        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 8.dp))
     }
 }
 

@@ -27,6 +27,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CenterFocusStrong
 import androidx.compose.material.icons.filled.FiberManualRecord
+import androidx.compose.material.icons.filled.Flip
 import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Videocam
@@ -74,7 +75,11 @@ import coil.compose.AsyncImage
 import com.decmike.canonremote.ccapi.CameraSetting
 import com.decmike.canonremote.ccapi.CcapiException
 import com.decmike.canonremote.data.CameraRepository
+import com.decmike.canonremote.ui.GuideOverlay
+import com.decmike.canonremote.ui.GuidePicker
 import com.decmike.canonremote.ui.Labels
+import com.decmike.canonremote.ui.parseAspect
+import com.decmike.canonremote.ui.rememberGuideState
 import com.decmike.canonremote.ui.SettingDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -194,7 +199,7 @@ fun RemoteScreen(vm: LiveViewModel = viewModel()) {
     val settings by CameraRepository.settings.collectAsStateWithLifecycle()
     val recent by CameraRepository.recent.collectAsStateWithLifecycle()
 
-    var grid by remember { mutableIntStateOf(prefs.grid) }
+    val guides = rememberGuideState()
     var af by remember { mutableStateOf(true) }
     var timer by remember { mutableIntStateOf(0) }
     var countdown by remember { mutableStateOf<Int?>(null) }
@@ -257,7 +262,10 @@ fun RemoteScreen(vm: LiveViewModel = viewModel()) {
                             }
                         },
                 )
-                GridOverlay(grid, Modifier.fillMaxSize())
+                GuideOverlay(
+                    guides, androidx.compose.ui.geometry.Size(img.width.toFloat(), img.height.toFloat()), Modifier.fillMaxSize(),
+                    cameraRatio = parseAspect(settings["stillimageaspectratio"]?.value ?: settings["aspectratio"]?.value),
+                )
                 afPoint?.let { p ->
                     Canvas(Modifier.fillMaxSize()) {
                         drawRect(Color(0xFF4CAF50), topLeft = Offset(p.x - 40, p.y - 40),
@@ -289,7 +297,10 @@ fun RemoteScreen(vm: LiveViewModel = viewModel()) {
             IconButton(onClick = { if (active) vm.stop() else vm.start() }) {
                 Icon(if (active) Icons.Default.VisibilityOff else Icons.Default.Visibility, "Visée directe")
             }
-            IconButton(onClick = { grid = (grid + 1) % 4; prefs.grid = grid }) { Icon(Icons.Default.GridOn, "Grille") }
+            IconButton(onClick = { guides.pickerOpen = true }) { Icon(Icons.Default.GridOn, "Mire de composition") }
+            if (guides.guide.flippable) {
+                IconButton(onClick = guides::rotate) { Icon(Icons.Default.Flip, "Orientation de la mire") }
+            }
             Spacer(Modifier.weight(1f))
             Text("MF", style = MaterialTheme.typography.labelMedium)
             listOf("near3" to "<<<", "near2" to "<<", "near1" to "<", "far1" to ">", "far2" to ">>", "far3" to ">>>").forEach { (s, l) ->
@@ -419,38 +430,14 @@ fun RemoteScreen(vm: LiveViewModel = viewModel()) {
         )
     }
 
+    GuidePicker(guides)
+
     editing?.let { s ->
         SettingDialog(
             s, onDismiss = { editing = null },
             onPick = { v -> editing = null; scope.launch { CameraRepository.setSetting(s.key, v) } },
             onPickObject = { v -> editing = null; scope.launch { CameraRepository.setSettingObject(s.key, v) } },
         )
-    }
-}
-
-@Composable
-private fun GridOverlay(type: Int, modifier: Modifier) {
-    if (type == 0) return
-    Canvas(modifier) {
-        val c = Color.White.copy(alpha = 0.45f)
-        val w = size.width
-        val h = size.height
-        when (type) {
-            1 -> for (i in 1..2) {
-                drawLine(c, Offset(w * i / 3, 0f), Offset(w * i / 3, h), 1.5f)
-                drawLine(c, Offset(0f, h * i / 3), Offset(w, h * i / 3), 1.5f)
-            }
-            2 -> for (i in 1..3) {
-                drawLine(c, Offset(w * i / 4, 0f), Offset(w * i / 4, h), 1.5f)
-                drawLine(c, Offset(0f, h * i / 4), Offset(w, h * i / 4), 1.5f)
-            }
-            3 -> {
-                drawLine(c, Offset(0f, 0f), Offset(w, h), 1.5f)
-                drawLine(c, Offset(w, 0f), Offset(0f, h), 1.5f)
-                drawLine(c, Offset(w / 2, 0f), Offset(w / 2, h), 1.5f)
-                drawLine(c, Offset(0f, h / 2), Offset(w, h / 2), 1.5f)
-            }
-        }
     }
 }
 

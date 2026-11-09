@@ -14,6 +14,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Search
@@ -156,6 +158,16 @@ fun ConnectScreen(state: ConnState, onBluetooth: () -> Unit, modifier: Modifier 
                     Text("Déclenchement, pose B, vidéo et intervallomètre sans Wi-Fi",
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { HelpNav.open(HelpTopic.HOME) }, modifier = Modifier.weight(1f)) {
+                Icon(Icons.AutoMirrored.Filled.HelpOutline, null); Spacer(Modifier.width(6.dp)); Text("Aide")
+            }
+            OutlinedButton(onClick = { HelpNav.open(HelpTopic.EXPOSURE) }, modifier = Modifier.weight(1f)) {
+                Icon(Icons.Default.School, null); Spacer(Modifier.width(6.dp)); Text("Mémo photo")
             }
         }
 
