@@ -339,9 +339,9 @@ class GuideState(private val prefs: com.decmike.canonremote.data.Prefs) {
         private set
     var pickerOpen by androidx.compose.runtime.mutableStateOf(false)
 
-    fun setGuide(g: CompositionGuide) { guide = g; prefs.guide = g.name }
-    fun setAspect(a: GuideAspect) { aspect = a; prefs.guideAspect = a.name }
-    fun setColor(i: Int) { colorIndex = i; prefs.guideColor = i }
+    fun selectGuide(g: CompositionGuide) { guide = g; prefs.guide = g.name }
+    fun selectAspect(a: GuideAspect) { aspect = a; prefs.guideAspect = a.name }
+    fun selectColor(i: Int) { colorIndex = i; prefs.guideColor = i }
     /** Fait tourner l'orientation : normal -> miroir H -> miroir H+V -> miroir V. */
     fun rotate() {
         val (h, v) = when (flipH to flipV) {
@@ -387,7 +387,7 @@ fun GuidePicker(state: GuideState) {
     if (state.pickerOpen) {
         GuidePickerDialog(
             state.guide, state.aspect, state.colorIndex,
-            onGuide = state::setGuide, onAspect = state::setAspect, onColor = state::setColor,
+            onGuide = state::selectGuide, onAspect = state::selectAspect, onColor = state::selectColor,
             onDismiss = { state.pickerOpen = false },
         )
     }
