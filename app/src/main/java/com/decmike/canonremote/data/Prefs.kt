@@ -14,6 +14,19 @@ class Prefs(context: Context) {
         get() = sp.getInt("port", 8080)
         set(v) = sp.edit().putInt("port", v).apply()
 
+    /** true = connexion directe au Wi-Fi de l'appareil, false = même réseau (box). */
+    var directMode: Boolean
+        get() = sp.getBoolean("direct_mode", true)
+        set(v) = sp.edit().putBoolean("direct_mode", v).apply()
+
+    var directSsid: String
+        get() = sp.getString("direct_ssid", "") ?: ""
+        set(v) = sp.edit().putString("direct_ssid", v).apply()
+
+    var directPassword: String
+        get() = sp.getString("direct_pass", "") ?: ""
+        set(v) = sp.edit().putString("direct_pass", v).apply()
+
     var autoDownload: Boolean
         get() = sp.getBoolean("auto_download", false)
         set(v) = sp.edit().putBoolean("auto_download", v).apply()

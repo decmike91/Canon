@@ -7,7 +7,7 @@ Application Android (Kotlin / Jetpack Compose) qui pilote un boîtier Canon en W
 
 | Domaine | Fonctions |
 |---|---|
-| **Connexion** | Saisie de l'IP, recherche automatique sur le réseau, forçage du Wi-Fi (le Wi-Fi de l'appareil n'a pas d'Internet), reconnexion à la dernière IP |
+| **Connexion** | **Wi-Fi direct** : le téléphone rejoint le point d'accès de l'appareil depuis l'application (SSID + mot de passe mémorisés, détection automatique de l'adresse, données mobiles conservées) ; ou même réseau : saisie de l'IP, recherche automatique sur le réseau, forçage du Wi-Fi (le Wi-Fi de l'appareil n'a pas d'Internet), reconnexion à la dernière IP |
 | **Télécommande** | Visée directe, grille (tiers / 4×4 / diagonales), histogramme, AF tactile, mise au point manuelle (6 pas), déclenchement avec ou sans AF, retardateur 2 s / 10 s, bouton AF à maintenir (mi-course), **pose B** (ouvrir/fermer + chrono), enregistrement vidéo, vignette de la dernière photo |
 | **Réglages** | Lecture de *tous* les réglages exposés par le boîtier, modification (listes, plages numériques, réglages composés comme la qualité RAW+JPEG), recherche, mise à jour en direct quand on tourne les molettes |
 | **Galerie** | Cartes SD multiples, filtres JPEG / RAW / vidéo, vignettes, visionneuse plein écran avec balayage, infos EXIF, téléchargement simple ou multiple, suppression |
@@ -40,11 +40,11 @@ transfert, transfert auto, réglage de l'heure), qDslrDashboard / DSLR Controlle
 1. **Activer la CCAPI** (une seule fois) : Canon fournit l'outil d'activation après inscription
    gratuite sur le programme développeur Canon (developercommunity.usa.canon.com). Une fois activée,
    l'option « Camera Control API » apparaît dans le menu Wi-Fi du boîtier.
-2. Sur l'appareil : *Réseau › Wi-Fi › Connexion CCAPI*. Deux possibilités :
-   - rejoindre votre box/partage de connexion (le téléphone doit être sur le même réseau) ;
-   - ou utiliser l'appareil comme point d'accès et y connecter le téléphone.
-3. L'adresse IP s'affiche sur l'écran de l'appareil (souvent `192.168.1.2` en mode point d'accès).
-   Dans l'application, touchez **Rechercher** ou saisissez l'adresse, puis **Se connecter**.
+2. **Connexion directe** (sans box) : sur l'appareil, *Réseau › Wi-Fi › Connexion CCAPI › Mode point d'accès
+   de l'appareil › Connexion facile*. Dans l'application, onglet **Wi-Fi de l'appareil** : saisissez le mot de passe
+   affiché (et le SSID si besoin), touchez **Connexion directe** et validez dans la fenêtre Android.
+3. **Même réseau** : l'appareil rejoint votre box ou partage de connexion ; dans l'onglet **Même réseau**, touchez
+   **Rechercher** ou saisissez l'adresse IP affichée par l'appareil.
 
 Boîtiers compatibles CCAPI : la plupart des EOS R (R, RP, R3, R5, R5 II, R6, R6 II, R7, R8, R10, R50, R100…),
 EOS 90D, 850D, 250D, M50 Mk II, M6 Mk II, M200, PowerShot G5 X II, G7 X III… Certaines fonctions

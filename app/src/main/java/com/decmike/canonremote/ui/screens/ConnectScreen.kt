@@ -1,5 +1,18 @@
 package com.decmike.canonremote.ui.screens
 
+import android.content.Intent
+import android.provider.Settings
+import androidx.compose.material.icons.filled.Router
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.decmike.canonremote.ccapi.DirectState
+import com.decmike.canonremote.ccapi.DirectWifi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -59,6 +72,12 @@ fun ConnectScreen(state: ConnState, onBluetooth: () -> Unit, modifier: Modifier 
     var scanProgress by remember { mutableIntStateOf(0) }
     var found by remember { mutableStateOf<List<String>?>(null) }
     val connecting = state is ConnState.Connecting
+    val direct by DirectWifi.state.collectAsStateWithLifecycle()
+    var directMode by remember { mutableStateOf(prefs.directMode) }
+    var ssid by remember { mutableStateOf(prefs.directSsid) }
+    var pass by remember { mutableStateOf(prefs.directPassword) }
+    var showPass by remember { mutableStateOf(false) }
+    val directBusy = direct is DirectState.Connecting
 
     fun connect(h: String) {
         scope.launch { CameraRepository.connect(h, port.toIntOrNull() ?: 8080) }
@@ -80,7 +99,68 @@ fun ConnectScreen(state: ConnState, onBluetooth: () -> Unit, modifier: Modifier 
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = directMode, onClick = { directMode = true; prefs.directMode = true },
+                label = { Text("Wi-Fi de l'appareil") }, leadingIcon = { Icon(Icons.Default.CameraAlt, null, Modifier.size(18.dp)) })
+            FilterChip(selected = !directMode, onClick = { directMode = false; prefs.directMode = false },
+                label = { Text("Même réseau (box)") }, leadingIcon = { Icon(Icons.Default.Router, null, Modifier.size(18.dp)) })
+        }
+        Spacer(Modifier.height(12.dp))
+
+        if (directMode) {
+            Text("Le téléphone se connecte directement au point d'accès Wi-Fi de l'appareil, sans box ni Internet.",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = ssid, onValueChange = { ssid = it },
+                label = { Text("Nom du réseau (SSID)") },
+                placeholder = { Text("ex. EOSR6-123_Canon0A") },
+                supportingText = { Text("Laissez vide pour choisir parmi les réseaux « Canon » à proximité") },
+                singleLine = true, modifier = Modifier.fillMaxWidth(),
+            )
+            OutlinedTextField(
+                value = pass, onValueChange = { pass = it },
+                label = { Text("Mot de passe affiché par l'appareil") },
+                singleLine = true,
+                visualTransformation = if (showPass) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    IconButton(onClick = { showPass = !showPass }) {
+                        Icon(if (showPass) Icons.Default.VisibilityOff else Icons.Default.Visibility, "Afficher")
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick = {
+                    prefs.directSsid = ssid.trim(); prefs.directPassword = pass
+                    scope.launch {
+                        val h = DirectWifi.connect(context, ssid, pass)
+                        if (h != null) { host = h; CameraRepository.connect(h, port.toIntOrNull() ?: 8080) }
+                    }
+                },
+                enabled = !directBusy && !connecting,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            ) {
+                if (directBusy || connecting) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                else Icon(Icons.Default.Wifi, null)
+                Spacer(Modifier.width(8.dp))
+                Text(if (directBusy || connecting) "Connexion…" else "Connexion directe")
+            }
+            when (val d = direct) {
+                is DirectState.Connecting -> Text(d.step, style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp))
+                is DirectState.Failed -> Text(d.message, color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 8.dp))
+                else -> {}
+            }
+            TextButton(onClick = {
+                runCatching { context.startActivity(Intent(Settings.Panel.ACTION_WIFI)) }
+            }) { Text("Ouvrir les réglages Wi-Fi du téléphone") }
+        } else {
 
         OutlinedTextField(
             value = host, onValueChange = { host = it },
@@ -143,6 +223,8 @@ fun ConnectScreen(state: ConnState, onBluetooth: () -> Unit, modifier: Modifier 
             }
         }
 
+        } // fin du mode « même réseau »
+
         if (state is ConnState.Failed) {
             Spacer(Modifier.height(16.dp))
             Card { Text(state.message, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.primary) }
@@ -171,6 +253,18 @@ fun ConnectScreen(state: ConnState, onBluetooth: () -> Unit, modifier: Modifier 
             }
         }
 
+        if (directMode) {
+            SectionTitle("Connexion directe : mode d'emploi")
+            Card {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("1. Une seule fois : activez la CCAPI sur le boîtier (outil d'activation Canon).")
+                    Text("2. Sur l'appareil : Réseau › Wi-Fi › Connexion CCAPI › Mode point d'accès de l'appareil › Connexion facile.")
+                    Text("3. L'appareil affiche son nom de réseau (SSID) et son mot de passe : saisissez-les ci-dessus (ils sont mémorisés).")
+                    Text("4. Touchez « Connexion directe » puis validez le réseau dans la fenêtre Android. L'application trouve l'appareil toute seule.")
+                    Text("Les données mobiles restent actives pendant la connexion.", color = MaterialTheme.colorScheme.secondary)
+                }
+            }
+        } else {
         SectionTitle("Première connexion Wi-Fi")
         Card {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -179,6 +273,7 @@ fun ConnectScreen(state: ConnState, onBluetooth: () -> Unit, modifier: Modifier 
                 Text("3. Connectez le téléphone au même réseau Wi-Fi (ou au point d'accès de l'appareil).")
                 Text("4. L'adresse IP est affichée sur l'écran de l'appareil. Touchez « Rechercher » pour la trouver automatiquement.")
             }
+        }
         }
     }
 }

@@ -18,6 +18,7 @@ import java.net.Socket
 object NetworkHelper {
 
     private fun wifiNetwork(context: Context): Network? {
+        DirectWifi.network?.let { return it }
         val cm = context.getSystemService(ConnectivityManager::class.java)
         @Suppress("DEPRECATION")
         return cm.allNetworks.firstOrNull { n ->

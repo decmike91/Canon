@@ -97,7 +97,9 @@ object CameraRepository {
         }
     }
 
-    fun disconnect() {
+    /** [releaseNetwork] : rend aussi le Wi-Fi direct de l'appareil (bouton Déconnecter). */
+    fun disconnect(releaseNetwork: Boolean = false) {
+        if (releaseNetwork) com.decmike.canonremote.ccapi.DirectWifi.release(appContext)
         eventJob?.cancel()
         eventJob = null
         val c = client

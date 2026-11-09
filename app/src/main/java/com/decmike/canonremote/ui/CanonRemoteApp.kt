@@ -148,7 +148,7 @@ private fun MainContent(snackbar: SnackbarHostState, onBluetooth: () -> Unit) {
                     IconButton(onClick = onBluetooth) {
                         Icon(Icons.Default.Bluetooth, "Télécommande Bluetooth")
                     }
-                    IconButton(onClick = { CameraRepository.disconnect() }) {
+                    IconButton(onClick = { CameraRepository.disconnect(releaseNetwork = true) }) {
                         Icon(Icons.Default.LinkOff, "Déconnecter")
                     }
                 },
