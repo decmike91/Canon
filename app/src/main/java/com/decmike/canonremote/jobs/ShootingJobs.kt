@@ -130,6 +130,10 @@ class JobRunner(
 
     /** Prépare le temps de pose. Renvoie (durée en secondes ou null si inconnue, bulb ?). */
     private suspend fun prepareExposure(exposureSec: Double?): Pair<Double?, Boolean> {
+        if (!camera.supportsSettings) {
+            // Bluetooth : la vitesse est réglée sur l'appareil ; au-delà de 30 s, pose B
+            return exposureSec to (exposureSec != null && exposureSec > 30.0)
+        }
         val tv = camera.getSetting("tv")
         if (exposureSec == null) {
             val v = tv?.value
@@ -187,6 +191,7 @@ class JobRunner(
     }
 
     private suspend fun runHdr(job: ShootJob.Hdr) {
+        if (!camera.supportsSettings) error("Le HDR nécessite la connexion Wi-Fi (CCAPI). En Bluetooth, activez l'AEB de l'appareil.")
         val mode = camera.getSetting("shootingmodedial")?.value?.lowercase()
         val method = when (job.method) {
             HdrMethod.AUTO -> if (mode == "m" || mode == "bulb") HdrMethod.SHUTTER else HdrMethod.COMPENSATION
@@ -226,6 +231,7 @@ class JobRunner(
     }
 
     private suspend fun runFocusStack(job: ShootJob.FocusStack) {
+        if (!camera.supportsSettings) error("Le focus stacking nécessite la connexion Wi-Fi (CCAPI)")
         val dir = if (job.towardsFar) "far" else "near"
         val step = "$dir${job.stepSize.coerceIn(1, 3)}"
         update { copy(total = job.shots) }

@@ -1,11 +1,13 @@
 package com.decmike.canonremote.ui
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryFull
+import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Battery2Bar
 import androidx.compose.material.icons.filled.Battery5Bar
 import androidx.compose.material.icons.filled.CameraAlt
@@ -29,7 +31,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -43,6 +48,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.decmike.canonremote.data.CameraRepository
 import com.decmike.canonremote.data.ConnState
+import com.decmike.canonremote.ui.screens.BluetoothScreen
 import com.decmike.canonremote.ui.screens.ConnectScreen
 import com.decmike.canonremote.ui.screens.DeviceScreen
 import com.decmike.canonremote.ui.screens.GalleryScreen
@@ -65,10 +71,18 @@ fun CanonRemoteApp() {
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(Unit) { CameraRepository.messages.collect { snackbar.showSnackbar(it) } }
 
+    var showBle by rememberSaveable { mutableStateOf(false) }
+    if (showBle) {
+        Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { pad ->
+            Box(Modifier.padding(bottom = pad.calculateBottomPadding())) { BluetoothScreen(onBack = { showBle = false }) }
+        }
+        return
+    }
+
     val connected = state as? ConnState.Connected
     if (connected == null) {
         Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { pad ->
-            ConnectScreen(state, Modifier.padding(pad))
+            ConnectScreen(state, onBluetooth = { showBle = true }, modifier = Modifier.padding(pad))
         }
         return
     }
@@ -103,6 +117,9 @@ fun CanonRemoteApp() {
                             Text("$lvl%", style = MaterialTheme.typography.labelMedium)
                             Spacer(Modifier.width(4.dp))
                         }
+                    }
+                    IconButton(onClick = { showBle = true }) {
+                        Icon(Icons.Default.Bluetooth, "Télécommande Bluetooth")
                     }
                     IconButton(onClick = { CameraRepository.disconnect() }) {
                         Icon(Icons.Default.LinkOff, "Déconnecter")

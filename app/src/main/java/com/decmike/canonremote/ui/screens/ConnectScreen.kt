@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Wifi
@@ -46,7 +47,7 @@ import com.decmike.canonremote.ui.SectionTitle
 import kotlinx.coroutines.launch
 
 @Composable
-fun ConnectScreen(state: ConnState, modifier: Modifier = Modifier) {
+fun ConnectScreen(state: ConnState, onBluetooth: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val prefs = CameraRepository.prefs
@@ -145,7 +146,20 @@ fun ConnectScreen(state: ConnState, modifier: Modifier = Modifier) {
             Card { Text(state.message, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.primary) }
         }
 
-        SectionTitle("Première connexion")
+        Spacer(Modifier.height(16.dp))
+        Card(onClick = onBluetooth, modifier = Modifier.fillMaxWidth()) {
+            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Bluetooth, null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text("Télécommande Bluetooth", fontWeight = FontWeight.SemiBold)
+                    Text("Déclenchement, pose B, vidéo et intervallomètre sans Wi-Fi",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        SectionTitle("Première connexion Wi-Fi")
         Card {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("1. Activez la Camera Control API (CCAPI) sur votre boîtier (outil d'activation Canon, une seule fois).")

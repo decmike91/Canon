@@ -84,3 +84,36 @@ class JobRunnerTest {
         assertEquals(listOf("shoot", "focus far2", "focus far2", "shoot", "focus far2", "focus far2", "shoot"), cam.log)
     }
 }
+
+/** Télécommande sans accès aux réglages (cas du Bluetooth). */
+class FakeBleCamera : CameraControl {
+    val log = mutableListOf<String>()
+    override val supportsSettings get() = false
+    override suspend fun getSetting(key: String): CameraSetting? = null
+    override suspend fun setSetting(key: String, value: String) = throw UnsupportedOperationException()
+    override suspend fun shoot(af: Boolean) { log += "shoot" }
+    override suspend fun shutterManual(action: String, af: Boolean) { log += "manual $action" }
+    override suspend fun driveFocus(step: String) = throw UnsupportedOperationException()
+}
+
+class BleJobTest {
+    @Test fun bulbIntervalOverBluetooth() = runTest {
+        val cam = FakeBleCamera()
+        val p = mutableListOf<JobProgress>()
+        JobRunner(cam) { p += it }.run(ShootJob.Interval(count = 2, exposureSec = 60.0, intervalSec = 3.0))
+        assertEquals(listOf("manual full_press", "manual release", "manual full_press", "manual release"), cam.log)
+        assertNull(p.last().error)
+    }
+
+    @Test fun shortExposureOverBluetooth() = runTest {
+        val cam = FakeBleCamera()
+        JobRunner(cam) {}.run(ShootJob.Interval(count = 3, exposureSec = null, intervalSec = 1.0))
+        assertEquals(3, cam.log.count { it == "shoot" })
+    }
+
+    @Test fun hdrRefusedOverBluetooth() = runTest {
+        val p = mutableListOf<JobProgress>()
+        JobRunner(FakeBleCamera()) { p += it }.run(ShootJob.Hdr(shots = 3, stepEv = 1.0))
+        assertTrue(p.last().error!!.contains("Wi-Fi"))
+    }
+}

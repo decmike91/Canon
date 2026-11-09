@@ -15,6 +15,7 @@ Application Android (Kotlin / Jetpack Compose) qui pilote un boîtier Canon en W
 | **HDR** | Bracketing 3 / 5 / 7 / 9 images, écart ⅓ à 3 IL, par la vitesse (mode M) ou par la correction d'exposition (P/Av/Tv), **HDR timelapse** (séries répétées), réglage d'origine restauré à la fin |
 | **Focus stacking** | N images avec déplacement motorisé de la mise au point entre chaque vue |
 | **Appareil** | Modèle, firmware, n° de série, batterie, objectif, température, espace libre des cartes, **synchronisation de l'heure** |
+| **Télécommande Bluetooth** | Sans Wi-Fi ni CCAPI : l'application se présente comme une télécommande Canon BR-E1. Déclenchement (avec AF), AF à maintenir, retardateur 2 s, pose B avec chrono, vidéo, zoom (PowerShot), **intervallomètre Bluetooth** (poses longues en B comprises) |
 | **Transfert auto** | Les nouvelles photos sont copiées sur le téléphone dès la prise de vue (option RAW) |
 
 Les séquences tournent dans un service au premier plan : elles continuent écran éteint,
@@ -48,6 +49,17 @@ EOS 90D, 850D, 250D, M50 Mk II, M6 Mk II, M200, PowerShot G5 X II, G7 X III… C
 (visée tactile, vidéo, focus stacking) dépendent du modèle : l'application affiche un message
 si le boîtier refuse une commande.
 
+## Télécommande Bluetooth
+
+1. Sur l'appareil : *Réseau › Réglages Bluetooth › Bluetooth : Activé*, puis *Télécommande › Appairage*.
+2. Dans l'application : **Télécommande Bluetooth** (écran d'accueil ou icône Bluetooth en haut), puis touchez
+   l'appareil trouvé. L'appairage est mémorisé : les fois suivantes, touchez « Dernier appareil ».
+3. Certains boîtiers demandent de choisir le mode d'acquisition « Télécommande / retardateur ».
+
+Compatible avec les boîtiers qui acceptent la télécommande BR-E1 (EOS R, RP, R5, R6, R7, R8, R10, R50, R100,
+90D, 850D, 250D, M50, M6 II, PowerShot G7 X III, G5 X II…). Le Bluetooth ne permet ni de lire les réglages ni
+la visée : HDR, focus stacking et visée directe restent en Wi-Fi.
+
 ## Développement
 
 ```bash
@@ -59,6 +71,7 @@ Structure :
 
 ```
 app/src/main/java/com/decmike/canonremote/
+├── ble/        télécommande Bluetooth (émulation BR-E1)
 ├── ccapi/      client CCAPI (HTTP/JSON), calculs d'exposition, recherche réseau
 ├── data/       état global, préférences, enregistrement dans la galerie
 ├── jobs/       moteur de séquences (intervallomètre, HDR, focus stack) + service

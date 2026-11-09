@@ -15,6 +15,7 @@ class CanonApp : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         CameraRepository.init(this)
+        com.decmike.canonremote.ble.BleRemote.init(this)
         ShootingService.createChannel(this)
     }
 

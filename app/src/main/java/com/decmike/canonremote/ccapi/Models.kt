@@ -72,6 +72,8 @@ class CcapiException(val code: Int, message: String) : Exception(message) {
 
 /** Abstraction minimale utilisée par les séquences (testable sans appareil). */
 interface CameraControl {
+    /** Faux pour la télécommande Bluetooth, qui ne peut ni lire ni modifier les réglages. */
+    val supportsSettings: Boolean get() = true
     suspend fun getSetting(key: String): CameraSetting?
     suspend fun setSetting(key: String, value: String)
     suspend fun shoot(af: Boolean)

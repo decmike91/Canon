@@ -53,7 +53,9 @@ class ShootingService : Service() {
 
         job?.cancel()
         job = scope.launch {
-            val client = runCatching { CameraRepository.requireClient() }.getOrNull()
+            val client: com.decmike.canonremote.ccapi.CameraControl? =
+                if (pendingBle) com.decmike.canonremote.ble.BleRemote.takeIf { it.isConnected }
+                else runCatching { CameraRepository.requireClient() }.getOrNull()
             if (client == null) {
                 CameraRepository.publishJob(JobProgress(finished = true, title = toRun.title, error = "Appareil non connecté"))
             } else {
@@ -118,6 +120,7 @@ class ShootingService : Service() {
         private const val ACTION_STOP = "stop"
 
         @Volatile private var pending: ShootJob? = null
+        @Volatile private var pendingBle = false
 
         fun createChannel(context: Context) {
             context.getSystemService(NotificationManager::class.java).createNotificationChannel(
@@ -125,8 +128,9 @@ class ShootingService : Service() {
             )
         }
 
-        fun start(context: Context, job: ShootJob) {
+        fun start(context: Context, job: ShootJob, bluetooth: Boolean = false) {
             pending = job
+            pendingBle = bluetooth
             context.startForegroundService(Intent(context, ShootingService::class.java))
         }
 
